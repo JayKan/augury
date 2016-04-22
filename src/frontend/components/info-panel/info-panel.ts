@@ -23,6 +23,7 @@ import {
 })
 export class InfoPanel {
   @Input() tree;
+  @Input() ngModules: {[key: string]: any};
   @Input() node;
   @Input() instanceValue: InstanceWithMetadata;
   @Input() loadingState: ComponentLoadState;
@@ -58,16 +59,16 @@ export class InfoPanel {
       : new Map<string, [ObjectType, any]>();
   }
 
-  private get providers(): Array<any> {
+  private get providers(): {[token: string]: any} {
     return this.instanceValue
       ? this.instanceValue.providers
-      : [];
+      : {};
   }
 
   private get componentMetadata(): ComponentMetadata {
     return this.instanceValue
       ? this.instanceValue.componentMetadata
-      : new Map<string, [string, ObjectType, any]>();
+      : new Map<string, [[string, ObjectType, any]]>();
   }
 
   private onSelectedTabChanged(tab: StateTab) {

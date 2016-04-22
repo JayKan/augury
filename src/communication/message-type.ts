@@ -33,6 +33,9 @@ export enum MessageType {
   /// Transmit the delta of two trees
   TreeDiff,
 
+  /// Send the list of NgModules
+  NgModules,
+
   /// Send the complete router tree (TODO(cbond: support diff))
   RouterTree,
 
@@ -41,6 +44,9 @@ export enum MessageType {
 
   /// Update the value of a property inside the component tree
   UpdateProperty,
+
+  /// Update a property on a provider reference
+  UpdateProviderProperty,
 
   /// Emit a new value through an EventEmitter
   EmitValue,

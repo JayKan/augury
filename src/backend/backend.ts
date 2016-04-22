@@ -12,6 +12,8 @@ import {
 
 import {onElementFound, onFindElement} from './utils/find-element';
 
+import {parseModules} from './utils/parse-modules';
+
 import {createTreeFromElements} from '../tree/mutable-tree-factory';
 
 import {
@@ -37,6 +39,7 @@ import {
   parseRoutes,
   getNodeFromPartialPath,
   getNodeInstanceParent,
+  getNodeProvider,
 } from './utils';
 
 import {serialize} from '../utils';
@@ -67,6 +70,12 @@ let previousTree: MutableTree,
   previousCount: number,
   onMouseOver,
   onMouseDown;
+
+const parseInitialModules = (roots: Array<any>) => {
+  if (roots.length) {
+    messageBuffer.enqueue(MessageFactory.ngModules(parseModules(roots[0])));
+  }
+};
 
 const updateComponentTree = (roots: Array<any>) => {
   const {tree, count} = createTreeFromElements(roots, treeRenderOptions);
@@ -114,13 +123,16 @@ const bind = (root) => {
     subscriptions.push(ngZone.onStable.subscribe(() => subject.next(void 0)));
   }
 
+  // parse components and routes each time
   subscriptions.push(
     subject.debounceTime(0).subscribe(() => {
       updateComponentTree(getAllAngularRootElements().map(r => ng.probe(r)));
       updateRouterTree(routerTree());
     }));
 
-  subject.next(void 0); // initial load
+  // initial load
+  subject.next(void 0);
+  parseInitialModules(getAllAngularRootElements().map(r => ng.probe(r)));
 };
 
 const checkDebug = (fn: () => void) => {
@@ -198,6 +210,13 @@ const messageHandler = (message: Message<any>) => {
         message.content.path,
         message.content.newValue));
 
+    case MessageType.UpdateProviderProperty:
+      return tryWrap(() => updateProviderProperty(previousTree,
+        message.content.path,
+        message.content.token,
+        message.content.propertyPath,
+        message.content.newValue));
+
     case MessageType.EmitValue:
       return tryWrap(() => emitValue(previousTree,
         message.content.path,
@@ -242,20 +261,34 @@ const getComponentInstance = (tree: MutableTree, node: Node) => {
   return null;
 };
 
-const updateProperty = (tree: MutableTree, path: Path, newValue) => {
+const updateNode = (tree: MutableTree, path: Path, fn: (element) => void) => {
   const node = getNodeFromPartialPath(tree, path);
   if (node) {
     const probed = ng.probe(node.nativeElement());
     if (probed) {
       const ngZone = probed.injector.get(ng.coreTokens.NgZone);
-      ngZone.run(() => {
-        const instanceParent = getNodeInstanceParent(probed, path);
-        if (instanceParent) {
-          instanceParent[path[path.length - 1]] = newValue;
-        }
-      });
+
+      ngZone.run(() => fn(probed));
     }
   }
+};
+
+const updateProperty = (tree: MutableTree, path: Path, newValue) => {
+  updateNode(tree, path, probed => {
+    const instanceParent = getNodeInstanceParent(probed, path);
+    if (instanceParent) {
+      instanceParent[path[path.length - 1]] = newValue;
+    }
+  });
+};
+
+const updateProviderProperty = (tree: MutableTree, path: Path, token: string, propertyPath: Path, newValue) => {
+  updateNode(tree, path, probed => {
+    const provider = getNodeProvider(probed, token, propertyPath);
+    if (provider) {
+      provider[propertyPath[propertyPath.length - 1]] = newValue;
+    }
+  });
 };
 
 const emitValue = (tree: MutableTree, path: Path, newValue) => {
@@ -283,7 +316,7 @@ const emitValue = (tree: MutableTree, path: Path, newValue) => {
   }
 };
 
-export const rootsWithRouters = () => {
+export const routersFromRoots = () => {
   const routers = [];
 
   for (const element of getAllAngularRootElements().map(e => ng.probe(e))) {
@@ -300,13 +333,19 @@ export const rootsWithRouters = () => {
 };
 
 export const routerTree = (): Array<MainRoute> => {
-  let routes = new Array<MainRoute>();
+  let routers = new Array<MainRoute>();
 
-  for (const router of rootsWithRouters()) {
-    routes = routes.concat(parseRoutes(router));
+  if (ng.coreTokens.Router) {
+    for (const rootElement of getAllAngularRootElements()) {
+      routers = routers.concat(ng.probe(rootElement).injector.get(ng.coreTokens.Router));
+    }
+  } else {
+    for (const router of routersFromRoots()) {
+      routers = routers.concat(router);
+    }
   }
 
-  return routes;
+  return routers.map(parseRoutes);
 };
 
 export const consoleReference = (node: Node) => {

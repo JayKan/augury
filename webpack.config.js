@@ -42,7 +42,7 @@ module.exports = {
   entry: {
     'frontend': [
       'webpack.vendor.ts',
-      './src/frontend/frontend'
+      './src/frontend/module'
     ],
     'backend': ['./src/backend/backend'],
     'ng-validate': ['./src/utils/ng-validate'],
@@ -114,9 +114,6 @@ module.exports = {
       'process.env.NODE_ENV': JSON.stringify(NODE_ENV),
       'PRODUCTION': JSON.stringify(process.env.NODE_ENV !== 'development'),
       'VERSION': JSON.stringify(pkg.version)
-    }),
-    new webpack.ProvidePlugin({
-      "JSONFormatter": "json-formatter-js"
     }),
     new OccurenceOrderPlugin(),
     new DedupePlugin()

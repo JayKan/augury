@@ -35,12 +35,12 @@ export enum ObjectType {
 
 export type Metadata = Map<any, [ObjectType, any]>;
 
-export type ComponentMetadata = Map<any, [string, ObjectType, any]>;
+export type ComponentMetadata = Map<any, [[string, ObjectType, any]]>;
 
 export interface InstanceWithMetadata {
   instance: any;
   metadata: Metadata;
-  providers: Array<any>;
+  providers: {[token: string]: any};
   componentMetadata: ComponentMetadata;
 }
 
@@ -52,7 +52,6 @@ export interface InstanceWithMetadata {
 // metadata into two objects, a lot of code that depends on reference equality is
 // going to get broken! So do not change this!
 export const instanceWithMetadata = (debugElement, node: Node, instance) => {
-
   if (node == null) {
     return null;
   }
@@ -61,13 +60,16 @@ export const instanceWithMetadata = (debugElement, node: Node, instance) => {
 
   const components = new Map<any, [[string, ObjectType, any]]>();
 
-  const providers = debugElement.providerTokens.map(t => debugElement.injector.get(t));
+  const providers =
+    debugElement.providerTokens
+      .map(t => [tokenName(t), debugElement.injector.get(t)])
+      .filter(provider => provider[1] !== instance);
 
-  const result = {
+  const result: any = {
     instance,
     providers,
-    metadata: [],
-    componentMetadata: [],
+    metadata: objectMetadata,
+    componentMetadata: components,
   };
 
   if (!instance) {
@@ -86,7 +88,7 @@ export const instanceWithMetadata = (debugElement, node: Node, instance) => {
         }
       };
 
-      const component = componentMetadata(obj);
+      const component = obj ? componentMetadata(obj.constructor) : null;
       if (component) {
         for (const input of componentInputs(component, obj)) {
           update(input.propertyKey, ObjectType.Input, {alias: input.bindingPropertyName});
@@ -125,6 +127,8 @@ export const instanceWithMetadata = (debugElement, node: Node, instance) => {
 
   return result;
 };
+
+export const tokenName = (token): string => functionName(token) || token.toString();
 
 const objectType = (object): ObjectType => {
   if (object != null && !isScalar(object)) {
