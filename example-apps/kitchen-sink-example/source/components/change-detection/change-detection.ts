@@ -1,13 +1,8 @@
-import {Component} from 'angular2/core';
-
+import {Component} from '@angular/core';
 import {User} from './user';
-import {UserInfoDefault} from './user-info-default';
-import {UserInfoPush} from './user-info-push';
-import {UserInfoCheckOnce} from './user-info-checkonce';
 
 @Component({
   selector: 'change-detection',
-  directives: [UserInfoDefault, UserInfoPush, UserInfoCheckOnce],
   template: `
   <div>
     <button type="button" class="btn btn-danger"
@@ -17,23 +12,19 @@ import {UserInfoCheckOnce} from './user-info-checkonce';
 
     <button type="button" class="btn btn-primary"
       (click)="makeUserOnline(0)">
-      Make User Online (muttable)
+      Make User Online (mutable)
     </button>
 
     <button type="button" class="btn btn-success"
       (click)="makeUserOnline(1)">
-      Make User Online (imuttable)
+      Make User Online (immutable)
     </button>
-    
+
     <user-info-default [user]="user">
     </user-info-default>
 
     <user-info-push [user]="user">
     </user-info-push>
-
-    <user-info-checkonce [user]="user">
-    </user-info-checkonce>
-
 
   </div>
   `

@@ -3,6 +3,7 @@
 const path = require("path");
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const DashboardPlugin = require('webpack-dashboard/plugin');
 
 module.exports = {
   stats: {
@@ -15,12 +16,12 @@ module.exports = {
     vendor: [
       'core-js',
       'reflect-metadata',
-      'angular2/bundles/angular2-polyfills',
-      'angular2/platform/browser',
-      'angular2/platform/common_dom',
-      'angular2/core',
-      'angular2/router',
-      'angular2/http'
+      'zone.js/dist/zone',
+      '@angular/platform-browser-dynamic',
+      '@angular/core',
+      '@angular/common',
+      '@angular/router',
+      '@angular/http'
      ]
   },
 
@@ -44,7 +45,8 @@ module.exports = {
       template: './source/index.html',
       inject: 'body',
       minify: false
-    })
+    }),
+    new DashboardPlugin()
   ],
 
   module: {
@@ -53,7 +55,7 @@ module.exports = {
       loader: 'tslint'
     }],
     loaders: [
-      { test: /\.ts$/, loader: 'ts', exclude: /node_modules/ },
+      { test: /\.ts$/, loaders: ['ts', 'angular2-router-loader'], exclude: /node_modules/ },
       { test: /\.html$/, loader: 'raw' },
       { test: /\.css$/, loader: 'style-loader!css-loader?sourceMap' },
       { test: /\.svg/, loader: 'url' },

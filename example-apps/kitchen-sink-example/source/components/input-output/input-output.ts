@@ -1,22 +1,20 @@
-import {Component, Input} from 'angular2/core';
-import Counter from './counter';
-import {NgClass, NgIf} from 'angular2/common';
+import {Component} from '@angular/core';
 
 @Component({
   selector: 'input-output',
   template: `
     <h4>Parent Num: {{ num }}</h4>
     <h4>Parent Count: {{ parentCount }}</h4>
-    <counter [count]="num" 
+    <counter [count]="num"
       (result)="onChange($event)"
       (displayMessage)="displayMessage($event)">
     </counter>
- 
+
     <h3 *ngIf="name && message">
       <hr/>
       {{name}}: {{message}}
     </h3>
- 
+
     <hr/>
 
     <div class="button" [ngClass]="{active: isOn, disabled: isDisabled}"
@@ -43,8 +41,7 @@ import {NgClass, NgIf} from 'angular2/common';
       color: gray;
       border: medium solid gray;
     }
-  `],
-  directives: [Counter, NgClass, NgIf]
+  `]
 })
 export default class InputOutput {
   message: string;

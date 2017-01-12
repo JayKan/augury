@@ -2,8 +2,8 @@
  * Helpers
  */
 var sliceArgs = Function.prototype.call.bind(Array.prototype.slice);
-var toString  = Function.prototype.call.bind(Object.prototype.toString);
-var NODE_ENV  = process.env.NODE_ENV || 'development';
+var toString = Function.prototype.call.bind(Object.prototype.toString);
+var NODE_ENV = process.env.NODE_ENV || 'production';
 var pkg = require('./package.json');
 
 // Polyfill
@@ -17,11 +17,11 @@ var webpack = require('webpack');
 
 // Webpack Plugins
 var OccurenceOrderPlugin = webpack.optimize.OccurenceOrderPlugin;
-var CommonsChunkPlugin   = webpack.optimize.CommonsChunkPlugin;
+var CommonsChunkPlugin = webpack.optimize.CommonsChunkPlugin;
 var UglifyJsPlugin = webpack.optimize.UglifyJsPlugin;
-var DedupePlugin   = webpack.optimize.DedupePlugin;
-var DefinePlugin   = webpack.DefinePlugin;
-var BannerPlugin   = webpack.BannerPlugin;
+var DedupePlugin = webpack.optimize.DedupePlugin;
+var DefinePlugin = webpack.DefinePlugin;
+var BannerPlugin = webpack.BannerPlugin;
 
 /*
  * Config
@@ -61,13 +61,13 @@ module.exports = {
 
   resolve: {
     root: __dirname,
-    extensions: ['','.ts','.js','.json']
+    extensions: ['', '.ts', '.js', '.json']
   },
-
   module: {
     preLoaders: [{
       test: /\.ts$/,
-      loader: 'tslint'
+      loader: 'tslint',
+      exclude: /node_modules/,
     }],
     loaders: [{
       // Support for .ts files.
@@ -90,6 +90,9 @@ module.exports = {
     }, {
       test: /\.png$/,
       loader: "url-loader?mimetype=image/png"
+    }, {
+      test: /\.html$/,
+      loader: 'raw'
     }],
     noParse: [
       /rtts_assert\/src\/rtts_assert/,
@@ -99,9 +102,9 @@ module.exports = {
     ]
   },
 
-  postcss: function() {
+  postcss: function () {
     return [
-      require('postcss-import'),
+      require('postcss-import')({addConfigTo: webpack}),
       require('postcss-cssnext')
     ];
   },
@@ -109,7 +112,11 @@ module.exports = {
   plugins: [
     new DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify(NODE_ENV),
+      'PRODUCTION': JSON.stringify(process.env.NODE_ENV !== 'development'),
       'VERSION': JSON.stringify(pkg.version)
+    }),
+    new webpack.ProvidePlugin({
+      "JSONFormatter": "json-formatter-js"
     }),
     new OccurenceOrderPlugin(),
     new DedupePlugin()
@@ -129,12 +136,18 @@ module.exports = {
  * Utils
  */
 function env(configEnv) {
-  if (configEnv === undefined) { return configEnv; }
+  if (configEnv === undefined) {
+    return configEnv;
+  }
   switch (toString(configEnv[NODE_ENV])) {
-    case '[object Object]'    : return Object.assign({}, configEnv.all || {}, configEnv[NODE_ENV]);
-    case '[object Array]'     : return [].concat(configEnv.all || [], configEnv[NODE_ENV]);
-    case '[object Undefined]' : return configEnv.all;
-    default                   : return configEnv[NODE_ENV];
+    case '[object Object]'    :
+      return Object.assign({}, configEnv.all || {}, configEnv[NODE_ENV]);
+    case '[object Array]'     :
+      return [].concat(configEnv.all || [], configEnv[NODE_ENV]);
+    case '[object Undefined]' :
+      return configEnv.all;
+    default                   :
+      return configEnv[NODE_ENV];
   }
 }
 

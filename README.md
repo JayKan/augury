@@ -1,56 +1,69 @@
 # Augury
 
-[![Circle CI](https://circleci.com/gh/rangle/augury.svg?style=svg)](https://circleci.com/gh/rangle/augury) [![Slack Status](https://batarangle-slack.herokuapp.com/badge.svg)](https://batarangle-slack.herokuapp.com)
+[![Circle CI](https://circleci.com/gh/rangle/augury.svg?style=svg)](https://circleci.com/gh/rangle/augury) [![Slack Status](https://augury-slack.herokuapp.com/badge.svg)](https://augury-slack.herokuapp.com)
 [![Stories in Ready](https://badge.waffle.io/rangle/augury.svg?label=ready&title=Ready)](https://waffle.io/rangle/augury)
 
-Augury is a Google Chrome Dev Tools extension for debugging Angular 2 applications. Treat this as a "developer preview". Until the official Chrome Web Store release, please follow the [instructions below](#getting-the-extension) to install it. It's actually quite easy.
+[Augury](https://augury.angular.io/) is a Google Chrome Dev Tools extension for debugging Angular 2 applications. You can install the extension from [Chrome Store](https://chrome.google.com/webstore/detail/augury/elgalmkoelokbchhkhacckoklkejnhcd).
 
-![Screenshot of Augury](images/screenloop.gif)
+Once the extenion is installed you can test it against the demo application https://augury.angular.io/demo/
 
+![Screenshot of Augury](assets/screenloop.gif)
 
 ## Supported Version
 
-Currently works with applications built in [Angular 2.0.0-beta.15](https://github.com/angular/angular/blob/master/CHANGELOG.md#200-beta15-2016-04-13) with _limited backward compatibility_, which will change once Angular 2 stabilizes.
+Currently works with applications built in [Angular 2.0.0](https://github.com/angular/angular/blob/master/CHANGELOG.md#200-2016-09-14) using the Angular Component Router version `3.0.0-beta.2`.
 
-## Join Our Slack Team
+To view the router graph inject the Router in the application root component as shown below (it must be named `router` exactly).
+```js
+export default class KitchenSink {
+  constructor(private router: Router) {
+  }
+}
+```
+[Example](https://github.com/rangle/augury/blob/dev/example-apps/kitchen-sink-example/source/containers/kitchen-sink.ts)
 
-If you want to contribute or need help getting started, [join us on Slack](https://batarangle-slack.herokuapp.com).
+## Support for AoT (Ahead-Of-Time) Compilation
 
-## Getting the Extension
+In order for Angular to expose the debug information for AoT applications, you will have to explicitly set the debug flag to `true` in your project's `tsconfig.json` as such:
+```json
+"angularCompilerOptions": {
+  /* ... */
+  "debug": true
+}
+```
+Note that this debug flag and `development mode` in Angular runtime are two completely different settings. 
 
-You can get the extension in two ways:
+To learn more about AoT compilation, visit [this section of Angular documentation](https://angular.io/docs/ts/latest/cookbook/aot-compiler.html).
 
-1. If you just want to use the extension you can get the latest master build, which is packaged and hosted on every successful build of master branch on CircleCI
- * To download the latest build go to [Batarangle.io](http://batarangle.io) and click install
- * After download is complete go to Chrome Extensions `chrome://extensions` in the Chrome
- * Drag and Drop the downloaded package to install the extension
+## Support for `enableDebugTools()`
 
-2. If you want to download the source code and build it manually
- * Clone the repo and install all the dependencies required
- * Run command `npm run pack`
- * This will generate `batarangle.crx` in the source folder
- * Then go to Chrome Extensions `chrome://extensions` in the Chrome
- * Drag and Drop the bundled package to install the extension
+Prior to [Angular 2.2.0](https://github.com/angular/angular/blob/master/CHANGELOG.md#220-upgrade-firebooster-2016-11-14), `enableDebugTools()` would clobber `ng.probe`, which breaks Augury. Prior to that version, [this workaround](https://github.com/AngularClass/angular2-webpack-starter/blob/dbb7d10e6e84b8e88116d957f0047b422ab807c1/src/app/environment.ts#L28...L36) will circumvent the issue.
 
 ## Development Environment
 
 To develop this extension, the following environment is used:
 
-* Node v4.2.1
-* NPM 3.3.10
-* TypeScript 1.7.5
-* typings 0.6.8
+* Node 4.2.3
+* NPM 3.5.3
+* TypeScript 1.8.9
+* typings 1.3.2
 
-## Trying out the extension
+## Installation
+
+### Pre-packaged
+
+- You can install this extension from the [Chrome Webstore](https://chrome.google.com/webstore/detail/augury/elgalmkoelokbchhkhacckoklkejnhcd?hl=en-US)
+
+### Building & installing locally
 
 1. Clone this repository: `git clone git://github.com/rangle/augury`.
 2. Run `npm install`.
-3. Run `npm run build` (errors related to typing files conflicts can be ignore for now).
+3. Run `npm run dev-build`.
 4. Navigate to chrome://extensions and enable Developer Mode.
 5. Choose "Load unpacked extension".
 6. In the dialog, open the directory you just cloned.
 
-To try out with an example application, refer to instructions in [README](./example-apps/todo-mvc-example/README.md).
+Try out the extension with one of our [example applications](#examples).
 
 ## Running Tests
 
@@ -65,17 +78,30 @@ To execute all unit tests, run `npm test`. It bundles up all files that match `*
 - `start` Clean build and run webpack in watch mode
 - `test` Bundle all *.test.ts and run it through a headless browser
 - `prepack` Run npm build before running npm pack
-- `pack` Packages the extension and create chrome build batarangle.crx
+- `pack` Packages the extension and create chrome build augury.crx
 
-## Developer Information
+## Examples
 
-- [Developer guide](https://github.com/rangle/augury/wiki)
-- [Contributing guidelines](CONTRIBUTING.md)
-- [Architecture of this extension](./docs/ARCHITECTURE.md)
+- [Kitchen Sink Demo](./example-apps/kitchen-sink-example/README.md)
+- [Superhero Tinder](./example-apps/superhero-app/README.md)
 
-## Future Plans
+## Issues
 
-We are working hard towards [the official release](https://github.com/rangle/augury/releases). But in the meantime, you can take a look at our [milestones](https://github.com/rangle/augury/milestones) to see what new features are in place.
+### Known Issues
+
+We are using GitHub Issues for our public bugs. We will keep track on this and will to make it clear when we have an internal fix in progress. Before filing a new task, try to make sure your problem doesn't already exist.
+
+### Reporting Issues
+
+The best way to get a bug fixed is to provide a test case with either one of the example apps bundled in the repo, or by making your own Angular 2.0 application illustrating the reduced use case.
+
+## Contributing
+
+If you'd like to help out, please read our [Contributing Guidelines](CONTRIBUTING.md). You might want to first checkout the [Architecture of this extension](./docs/ARCHITECTURE.md).
+
+## Join Our Slack Team
+
+If you want to contribute or need help getting started, [join us on Slack](https://augury-slack.herokuapp.com).
 
 ## License
 [MIT](LICENSE)

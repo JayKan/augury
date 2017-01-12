@@ -1,13 +1,11 @@
-import {Component} from 'angular2/core';
-
-import Hello from './hello';
+import {Component} from '@angular/core';
 
 @Component({
   selector: 'ngfor-directive',
-  directives: [Hello],
   template: `
   <div>
-     <hello *ngFor="#name of names" [msg]="'Hello from ' + name"></hello>
+     <hello-directives *ngFor="let name of names" [msg]="'Hello from ' + name">
+     </hello-directives>
   </div>
   `
 })

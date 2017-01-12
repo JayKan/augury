@@ -1,95 +1,96 @@
-declare var JSONFormatter: any;
-import {Component, ElementRef, Inject, EventEmitter,
-  OnChanges}
-  from 'angular2/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  SimpleChanges,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
-import {UserActions} from '../../actions/user-actions/user-actions';
+import {ComponentLoadState} from '../../state';
 
-import Accordion from '../accordion/accordion';
-import ParseData from '../../utils/parse-data';
-import RenderState from '../render-state/render-state';
-import Dependency from '../dependency/dependency';
+
+import {
+  ComponentMetadata,
+  Metadata,
+  MutableTree,
+  Node,
+  Path,
+  deserializePath,
+} from '../../../tree';
 
 @Component({
   selector: 'bt-component-info',
-  templateUrl: '/src/frontend/components/component-info/component-info.html',
-  inputs: ['node'],
-  directives: [RenderState, Accordion, Dependency]
+  template: require('./component-info.html'),
 })
-export default class ComponentInfo {
-  private node: any;
-  private propertyTree: string = '';
-  private _input: Array<any>;
+export class ComponentInfo {
+  @Input() private node: Node;
+  @Input() private tree: MutableTree;
+  @Input() private state;
+  @Input() private providers: Array<any>;
+  @Input() private metadata: Metadata;
+  @Input() private componentMetadata: ComponentMetadata;
+  @Input() private loadingState: ComponentLoadState;
 
-  constructor(
-    @Inject(ElementRef) private elementRef: ElementRef,
-    private userActions: UserActions
-  ) { }
+  @Output() private selectNode = new EventEmitter<Node>();
 
-  ngOnChanges(change: any) {
+  private changeDetectionStrategies = ChangeDetectionStrategy;
+
+  private ComponentLoadState = ComponentLoadState;
+  private path: Path;
+
+  ngOnChanges() {
     if (this.node) {
-      this.normalizeInput();
-      setTimeout(() => this.displayTree());
+      this.path = deserializePath(this.node.id);
     }
   }
 
-  viewComponentSource($event) {
-    const highlightStr = '[augury-id=\"' + this.node.id + '\"]';
+  private get hasState() {
+    if (this.node == null || this.state == null) {
+      return false;
+    }
 
-    let evalStr = `inspect(ng.probe(document.querySelector('${highlightStr}'))
-    .componentInstance.constructor)`;
+    return Object.keys(this.state).length > 0;
+  }
 
-    chrome.devtools.inspectedWindow.eval(
-      evalStr,
-      function(result, isException) {
-        if (isException) {
-          console.log(isException);
+  private get hasProviders() {
+    return this.node &&
+      this.node.providers &&
+      this.node.providers.length > 0;
+  }
+
+  private get hasDirectives() {
+    return this.node &&
+      this.node.directives &&
+      this.node.directives.length > 0;
+  }
+
+  private get hasDependencies() {
+    return this.node &&
+      this.node.dependencies &&
+      this.node.dependencies.length > 0;
+  }
+
+  private get hasProperties() {
+    return this.node &&
+      this.node.description &&
+      this.node.description.length > 0;
+  }
+
+  private get hasInstanceProviders() {
+    return this.providers && this.providers.length > 0;
+  }
+
+  private viewComponentSource() {
+    chrome.devtools.inspectedWindow.eval(`
+      var root = ng.probe(inspectedApplication.nodeFromPath('${this.node.id}'));
+      if (root) {
+        if (root.componentInstance) {
+          inspect(root.componentInstance.constructor);
         }
-      }
-    );
-
-    $event.preventDefault();
-    $event.stopPropagation();
+        else {
+          throw new Error('This component has no instance and therefore no constructor');
+        }
+      }`);
   }
-
-  normalizeInput(): void {
-    this._input = [];
-    if (this.node.input) {
-      this.node.input.forEach(elem => {
-        let [key, value] = elem.split(':');
-        this._input.push({
-          key: key,
-          value: (value ? value.trim() : '')
-        });
-      });
-    }
-  }
-
-  fireEvent(output: string, param: any) {
-    try {
-      param = JSON.parse(param);
-      this.userActions.fireEvent({
-        'output': output,
-        'data': param,
-        'id': this.node.id
-      });
-    } catch (exception) {
-      console.log(exception);
-    }
-  }
-
-  displayTree(): void {
-    const childrenContainer = this
-      .elementRef.nativeElement
-      .querySelector('#tree-children');
-
-    if (childrenContainer && this.node.children) {
-      while (childrenContainer.firstChild) {
-        childrenContainer.removeChild(childrenContainer.firstChild);
-      }
-      const formatter2 = new JSONFormatter(this.node.children);
-      childrenContainer.appendChild(formatter2.render());
-    }
-  }
-
 }

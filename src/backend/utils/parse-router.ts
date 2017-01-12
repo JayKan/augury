@@ -1,5 +1,3 @@
-import {RouteRule} from 'angular2/src/router/rules/rules';
-
 export interface Route {
   name: string;
   hash: string;
@@ -16,71 +14,49 @@ export interface MainRoute {
   children: Array<Route>;
 }
 
-export class ParseRouter {
+// *** Component Router ***
+export function parseRoutes(router: any): MainRoute {
+  const rootName = router.rootComponentType.name;
+  const rootChildren: [any] = router.config;
 
-  private static NAME_REGEX = /function ([^\(]*)/;
+  const root = {
+    handler: rootName,
+    name: rootName,
+    path: '/',
+    children: rootChildren ? assignChildrenToParent(null, rootChildren) : []
+  };
 
-  public static parseRoutes(registry: any): MainRoute {
-    const routes: Array<MainRoute> = new Array<MainRoute>();
-    const rules = registry._rules;
+  return root;
+}
 
-    rules.forEach((key, value) => {
-      routes.push(this.getMainRoute(key, value));
-    });
-    return this.flattenRoutes(routes);
-  }
+function assignChildrenToParent(parent, children): [any] {
+  return children.map((child) => {
+    const childName = childRouteName(child);
+    const childDescendents: [any] = child._loadedConfig ? child._loadedConfig.routes : child.children;
 
-  private static mapRoutes(routes: any, subRoutes: any): void {
-    routes.map((r) => {
-      const e = subRoutes.filter(sr => sr.name === r.name);
-      if (e.length > 0) {
-        r.children = e[0].children;
-        this.mapRoutes(r.children, subRoutes);
-      }
-      return r;
-    });
-  }
-
-  private static flattenRoutes(routes: Array<MainRoute>): MainRoute {
-    const appRoute: MainRoute = routes[0];
-    const subRoutes: any = routes.slice(1);
-
-    this.mapRoutes(appRoute.children, subRoutes);
-    return appRoute;
-  }
-
-  private static getMainRoute(key: any, value: any): MainRoute {
-
-    const name: string = this.NAME_REGEX.exec(value)[1];
-    const children: Array<Route> = new Array<Route>();
-
-    key.auxRulesByName.forEach((obj, route_name) => {
-      children.push(this.getRoute(obj, route_name, true));
-    });
-
-    key.rulesByName.forEach((obj, route_name) => {
-      children.push(this.getRoute(obj, route_name));
-    });
+    // only found in aux routes, otherwise property will be undefined
+    const isAuxRoute = !!child.outlet;
 
     return {
-      name,
-      children
+      handler: childName,
+      name: childName,
+      parent: parent,
+      path: `/${child.path}`,
+      isAux: isAuxRoute,
+      children: childDescendents ?
+        assignChildrenToParent(this, childDescendents) : []
     };
+  });
+}
+
+function childRouteName(child): string {
+  if (child.component) {
+    return child.component.name;
   }
-
-  private static getRoute
-    (value: RouteRule, name: string, isAux: boolean = false): Route {
-    const handler: string =
-      this.NAME_REGEX.exec(value.handler.componentType + '')[1];
-
-    return {
-      name,
-      handler,
-      hash: value.hash,
-      path: value.path,
-      specificity: value.specificity,
-      data: value.handler.data,
-      isAux
-    };
+  else if (child.loadChildren) {
+    return `${child.path} [Lazy]`;
+  }
+  else {
+    return 'no-name-route';
   }
 }

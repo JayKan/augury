@@ -1,17 +1,7 @@
-import {Component} from 'angular2/core';
-
-import NgIfDirective from './ngif-directive';
-import NgForDirective from './ngfor-directive';
-import NgSwitchDirective from './ngswitch-directive';
-import NgClassDirective from './ngclass-directive';
-import NgStyleDirective from './ngstyle-directive';
-import NgLocalizationDirective from './nglocalization-directive';
+import {Component} from '@angular/core';
 
 @Component({
   selector: 'angular-directives',
-  directives: [NgIfDirective, NgForDirective,
-    NgSwitchDirective, NgClassDirective, NgStyleDirective,
-    NgLocalizationDirective],
   template: `
   <div>
     <ngif-directive></ngif-directive>
@@ -28,6 +18,4 @@ import NgLocalizationDirective from './nglocalization-directive';
   </div>
   `
 })
-export default class AngularDirectives {
-
-}
+export default class AngularDirectives {}
